@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import os
-from networktables import NetworkTables
 import VisionTables
 
 def onChange(x):
@@ -11,7 +10,6 @@ WIDTH = 320
 HEIGHT = 240
 ANGLE_PER_PIXEL = 61.0 / WIDTH
 
-NetworkTables.initialize(server='10.33.24.49')
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
 cap = cv2.VideoCapture(port)

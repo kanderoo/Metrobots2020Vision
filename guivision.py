@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import os
+from networktables import NetworkTables
+import VisionTables
 
 def onChange(x):
     pass
@@ -9,8 +11,10 @@ WIDTH = 320
 HEIGHT = 240
 ANGLE_PER_PIXEL = 61.0 / WIDTH
 
-os.system('v4l2-ctl -d /dev/video2 -c exposure_auto=1')
-cap = cv2.VideoCapture(0)
+NetworkTables.initialize(server='10.33.24.49')
+port = int(input("Camera port: "))
+os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
+cap = cv2.VideoCapture(port)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH,WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT,HEIGHT)
 
@@ -46,7 +50,7 @@ while True:
     exposureAmount = cv2.getTrackbarPos('exposure', 'sliders')
 
     # image manipulation
-    os.system('v4l2-ctl -d /dev/video2 -c exposure_absolute='+str(exposureAmount))
+    os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute='+str(exposureAmount))
     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     erosion = cv2.erode(mask, kernel, iterations=erodeAmount)
@@ -59,13 +63,8 @@ while True:
         x, y, w, h = cv2.boundingRect(contours[0])
         centerX = x + (w / 2)
         centerY = y + (h / 2)
-        cubeArea = w * h
-        print("CenterX: " + str(centerX) + " CenterY: " + str(centerY))
-        print("Horizontal Angle From Center: " + str((centerX - WIDTH/2) * ANGLE_PER_PIXEL))
-        # cv2.putText(frame, centerX, org, FONT_HERSHEY_SIMPLEX, (255, 0, 255));
-        #VisionTables.sendX(centerX)
-        #VisionTables.sendY(centerY)
-        #VisionTavles.sendArea(cubeArea)
+        targetAngle = (centerX - WIDTH/2) * ANGLE_PER_PIXEL
+        VisionTables.sendTheta(targetAngle)
     except:
         print("No contours")
  

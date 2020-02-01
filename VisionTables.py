@@ -10,4 +10,4 @@ def sendTheta(x):
 
 NetworkTables.initialize(server='10.33.24.49')
 NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
-sd = NetworkTables.getTable("SmartDashboard")
+sd = NetworkTables.getTable("ShuffleBoard")

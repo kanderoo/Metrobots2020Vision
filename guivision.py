@@ -2,13 +2,13 @@ import cv2
 import numpy as np
 import os
 import VisionTables
+import math
 
 def onChange(x):
     pass
 
-WIDTH = 320
-HEIGHT = 240
-ANGLE_PER_PIXEL = 61.0 / WIDTH
+WIDTH = 1280
+HEIGHT = 720
 
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
@@ -49,6 +49,8 @@ while True:
 
     # image manipulation
     os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute='+str(exposureAmount))
+
+
     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     erosion = cv2.erode(mask, kernel, iterations=erodeAmount)
@@ -61,7 +63,8 @@ while True:
         x, y, w, h = cv2.boundingRect(contours[0])
         centerX = x + (w / 2)
         centerY = y + (h / 2)
-        targetAngle = (centerX - WIDTH/2) * ANGLE_PER_PIXEL
+        targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792))
+        print(targetAngle)
         VisionTables.sendTheta(targetAngle)
     except:
         print("No contours")

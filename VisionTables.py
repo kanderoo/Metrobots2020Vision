@@ -6,7 +6,6 @@ def connectionListener(connected, info):
 
 def sendTheta(x):
     sd.putNumber('targetAngle', x)
-    print(x)
 
 NetworkTables.initialize(server='10.33.24.49')
 NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)

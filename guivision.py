@@ -11,6 +11,10 @@ def onChange(x):
 WIDTH = 1280
 HEIGHT = 720
 
+TARGET_HEIGHT = 7.5625 / 3.281 # target height in feet (height of target center) converted to meters
+CAMERA_ANGLE = math.radians(60) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 0.10416 / 3.281 # camera height in feet (1.25 in) converted to meters
+
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
 cap = cv2.VideoCapture(port)
@@ -51,7 +55,6 @@ while True:
     # image manipulation
     os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute='+str(exposureAmount))
 
-
     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     erosion = cv2.erode(mask, kernel, iterations=erodeAmount)
@@ -60,16 +63,31 @@ while True:
     # contour detection and display
     contours, hierarchy = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(frame, contours, 0, (0,255,0), 3)
+
     try:
+        # horiz angle
         x, y, w, h = cv2.boundingRect(contours[0])
         centerX = x + (w / 2)
         centerY = y + (h / 2)
         targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792))
-        print(targetAngle)
         VisionTables.sendTheta(targetAngle)
+
+        # distance calculation
+        referencePixel = (HEIGHT/2)-centerY
+        a2 = referencePixel/math.radians(30)
+        totalAngle = CAMERA_ANGLE + a2
+        distance = (TARGET_HEIGHT-CAMERA_HEIGHT)/math.tan(totalAngle)
+        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / (10 / 3.281)) - a2
+        
+        # debug print
+        print("Reference Angle: ", str(a2))
+        print("Reference Pixel: ", str(referencePixel))
+        print("Total Angle: ", str(totalAngle))
+        print("Distance: ", distance*3.281)
+        print("A1: ", str(math.degrees(a1)))
+
     except:
         print("No contours")
- 
 
     cv2.imshow('sliders', frame)
     cv2.imshow('mask', dilation)

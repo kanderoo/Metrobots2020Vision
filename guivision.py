@@ -11,9 +11,9 @@ def onChange(x):
 WIDTH = 1280
 HEIGHT = 720
 
-TARGET_HEIGHT = 7.5625 / 3.281 # target height in feet (height of target center) converted to meters
-CAMERA_ANGLE = math.radians(60) # camera angle in degrees, converted to radians
-CAMERA_HEIGHT = 0.10416 / 3.281 # camera height in feet (1.25 in) converted to meters
+TARGET_HEIGHT = 7.5625 # target height in feet (height of target center) converted to meters
+CAMERA_ANGLE = math.radians(35.5) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 0.1666666666 # camera height in feet (1.25 in) converted to meters
 
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
@@ -42,14 +42,14 @@ while True:
     upper_hsv = np.array([255, 255, 255])
 
     # get slider values
-    lower_hsv[(0)] = cv2.getTrackbarPos('hL', 'sliders')
-    lower_hsv[(1)] = cv2.getTrackbarPos('sL', 'sliders')
-    lower_hsv[(2)] = cv2.getTrackbarPos('vL', 'sliders')
-    upper_hsv[(0)] = cv2.getTrackbarPos('hU', 'sliders')
-    upper_hsv[(1)] = cv2.getTrackbarPos('sU', 'sliders')
-    upper_hsv[(2)] = cv2.getTrackbarPos('vU', 'sliders')
-    erodeAmount = cv2.getTrackbarPos('erosion', 'sliders')
-    dilateAmount = cv2.getTrackbarPos('dilation', 'sliders')
+    lower_hsv[(0)] = 68 # cv2.getTrackbarPos('hL', 'sliders')
+    lower_hsv[(1)] = 110 # cv2.getTrackbarPos('sL', 'sliders')
+    lower_hsv[(2)] = 158 # cv2.getTrackbarPos('vL', 'sliders')
+    upper_hsv[(0)] = 93 # cv2.getTrackbarPos('hU', 'sliders')
+    upper_hsv[(1)] = 255 # cv2.getTrackbarPos('sU', 'sliders')
+    upper_hsv[(2)] = 255 # cv2.getTrackbarPos('vU', 'sliders')
+    erodeAmount = 1 # cv2.getTrackbarPos('erosion', 'sliders')
+    dilateAmount = 3 # cv2.getTrackbarPos('dilation', 'sliders')
     exposureAmount = cv2.getTrackbarPos('exposure', 'sliders')
 
     # image manipulation
@@ -71,20 +71,22 @@ while True:
         centerY = y + (h / 2)
         targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792))
         VisionTables.sendTheta(targetAngle)
+        print(targetAngle)
 
         # distance calculation
         referencePixel = (HEIGHT/2)-centerY
-        a2 = referencePixel/math.radians(30)
+        a2 = math.radians(referencePixel/(48/2))
         totalAngle = CAMERA_ANGLE + a2
         distance = (TARGET_HEIGHT-CAMERA_HEIGHT)/math.tan(totalAngle)
-        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / (10 / 3.281)) - a2
+        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / 10) - a2
         
         # debug print
         print("Reference Angle: ", str(a2))
         print("Reference Pixel: ", str(referencePixel))
-        print("Total Angle: ", str(totalAngle))
-        print("Distance: ", distance*3.281)
+        print("Total Angle: ", str(math.degrees(totalAngle)))
+        print("Distance: ", distance)
         print("A1: ", str(math.degrees(a1)))
+        print("A2: ", str(math.degrees(a2)))
 
     except:
         print("No contours")

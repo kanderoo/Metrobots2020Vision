@@ -12,8 +12,8 @@ WIDTH = 1280
 HEIGHT = 720
 
 TARGET_HEIGHT = 7.5625 # target height in feet (height of target center) converted to meters
-CAMERA_ANGLE = math.radians(35.5) # camera angle in degrees, converted to radians
-CAMERA_HEIGHT = 0.1666666666 # camera height in feet (1.25 in) converted to meters
+CAMERA_ANGLE = math.radians(30.2) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 2.5/12 # camera height in feet (1.25 in) converted to meters
 
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
@@ -71,11 +71,10 @@ while True:
         centerY = y + (h / 2)
         targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792))
         VisionTables.sendTheta(targetAngle)
-        print(targetAngle)
 
         # distance calculation
         referencePixel = (HEIGHT/2)-centerY
-        a2 = math.radians(referencePixel/(48/2))
+        a2 = math.radians(referencePixel*(80.7/720))
         totalAngle = CAMERA_ANGLE + a2
         distance = (TARGET_HEIGHT-CAMERA_HEIGHT)/math.tan(totalAngle)
         a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / 10) - a2

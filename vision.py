@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import json
+import math
 from networktables import NetworkTables
 from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
 
@@ -10,9 +11,9 @@ connected = False
 def connectionListener(connected, info):
     print(info, '; Connection=%s ' % connected)
 
-def sendTheta(x):
-    sd.putNumber('targetAngle', x)
-    print(x)
+def sendData(name, x):
+    sd.putNumber(name, x)
+    print(name, ": ", x)
 
 NetworkTables.initialize(server='10.33.24.2')
 NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
@@ -22,8 +23,15 @@ def onChange(x):
     pass
 
 # define consts
-WIDTH = 640
-HEIGHT = 360
+WIDTH = 320
+HEIGHT = 180
+
+TARGET_HEIGHT = 7.5625 # target height in feet (height of target center)
+CAMERA_ANGLE = math.radians(33) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 5.5/12 # camera height in feet (5.5 in)
+VERTICAL_FOV = 80.7
+HORIZONTAL_FOV = 120
+FOCAL_LENGTH = WIDTH/(2*math.tan(math.radians(HORIZONTAL_FOV/2)))
 
 # init camera
 port = 0
@@ -51,8 +59,8 @@ while True:
         break
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lower_hsv = np.array([60, 150, 80])
-    upper_hsv = np.array([115, 255, 255])
+    lower_hsv = np.array([68, 98, 129])
+    upper_hsv = np.array([89, 255, 255])
 
     # image manipulation
     os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute=0')
@@ -65,13 +73,24 @@ while True:
     im2, contours, hierarchy = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(frame, contours, 0, (0,255,0), 3)
     try:
+        # horiz angle
         x, y, w, h = cv2.boundingRect(contours[0])
         centerX = x + (w / 2)
         centerY = y + (h / 2)
         targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792)) # Function gotten from r=f*tan(theta)
-        sendTheta(targetAngle)
+        sendData("Horizontal Target Angle", targetAngle)
+
+        # distance calculation
+        referencePixel = (HEIGHT/2)-centerY
+        a2 = math.radians(referencePixel*(VERTICAL_FOV/HEIGHT))
+        totalAngle = CAMERA_ANGLE + a2
+        distance = (TARGET_HEIGHT-CAMERA_HEIGHT)/math.tan(totalAngle)
+        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / 10) - a2 # calculates a1 from initiation line
+
+        sendData("Distance to Target", distance)
     except:
-        sendTheta(-1000);
+        sendData("Horizontal Target Angle", 0)
+        sendData("Distance to Target", 0)
 
     k = cv2.waitKey(5) & 0xFF
     if k == 27:

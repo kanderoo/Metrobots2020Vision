@@ -8,12 +8,17 @@ import math
 def onChange(x):
     pass
 
-WIDTH = 1280
-HEIGHT = 720
+# 53:30 aspect ratio
+WIDTH = 320
+HEIGHT = 180
 
 TARGET_HEIGHT = 7.5625 # target height in feet (height of target center) converted to meters
-CAMERA_ANGLE = math.radians(30.2) # camera angle in degrees, converted to radians
-CAMERA_HEIGHT = 2.5/12 # camera height in feet (1.25 in) converted to meters
+CAMERA_ANGLE = math.radians(33) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 5.5/12 # camera height in feet (1.25 in) converted to meters
+VERTICAL_FOV = 80.7
+HORIZONTAL_FOV = 120
+FOCAL_LENGTH = WIDTH/(2*math.tan(math.radians(HORIZONTAL_FOV/2)))
+
 
 port = int(input("Camera port: "))
 os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
@@ -42,14 +47,14 @@ while True:
     upper_hsv = np.array([255, 255, 255])
 
     # get slider values
-    lower_hsv[(0)] = 68 # cv2.getTrackbarPos('hL', 'sliders')
-    lower_hsv[(1)] = 110 # cv2.getTrackbarPos('sL', 'sliders')
-    lower_hsv[(2)] = 158 # cv2.getTrackbarPos('vL', 'sliders')
-    upper_hsv[(0)] = 93 # cv2.getTrackbarPos('hU', 'sliders')
-    upper_hsv[(1)] = 255 # cv2.getTrackbarPos('sU', 'sliders')
-    upper_hsv[(2)] = 255 # cv2.getTrackbarPos('vU', 'sliders')
-    erodeAmount = 1 # cv2.getTrackbarPos('erosion', 'sliders')
-    dilateAmount = 3 # cv2.getTrackbarPos('dilation', 'sliders')
+    lower_hsv[(0)] = cv2.getTrackbarPos('hL', 'sliders')
+    lower_hsv[(1)] = cv2.getTrackbarPos('sL', 'sliders')
+    lower_hsv[(2)] = cv2.getTrackbarPos('vL', 'sliders')
+    upper_hsv[(0)] = cv2.getTrackbarPos('hU', 'sliders')
+    upper_hsv[(1)] = cv2.getTrackbarPos('sU', 'sliders')
+    upper_hsv[(2)] = cv2.getTrackbarPos('vU', 'sliders')
+    erodeAmount = cv2.getTrackbarPos('erosion', 'sliders')
+    dilateAmount = cv2.getTrackbarPos('dilation', 'sliders')
     exposureAmount = cv2.getTrackbarPos('exposure', 'sliders')
 
     # image manipulation
@@ -69,15 +74,16 @@ while True:
         x, y, w, h = cv2.boundingRect(contours[0])
         centerX = x + (w / 2)
         centerY = y + (h / 2)
-        targetAngle = math.degrees(math.atan((centerX - WIDTH/2)/792))
+        targetAngle = math.degrees(math.atan((centerX-(WIDTH/2))/FOCAL_LENGTH))
         VisionTables.sendTheta(targetAngle)
+        print("Horizontal Angle: ", targetAngle)
 
         # distance calculation
         referencePixel = (HEIGHT/2)-centerY
-        a2 = math.radians(referencePixel*(80.7/720))
+        a2 = math.radians(referencePixel*(VERTICAL_FOV/HEIGHT))
         totalAngle = CAMERA_ANGLE + a2
         distance = (TARGET_HEIGHT-CAMERA_HEIGHT)/math.tan(totalAngle)
-        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / 10) - a2
+        a1 = math.atan((TARGET_HEIGHT-CAMERA_HEIGHT) / 10) - a2 # calculates a1 from initiation line
         
         # debug print
         print("Reference Angle: ", str(a2))

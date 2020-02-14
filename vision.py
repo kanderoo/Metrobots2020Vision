@@ -27,15 +27,15 @@ WIDTH = 320
 HEIGHT = 180
 
 TARGET_HEIGHT = 7.5625 # target height in feet (height of target center)
-CAMERA_ANGLE = math.radians(33) # camera angle in degrees, converted to radians
-CAMERA_HEIGHT = 5.5/12 # camera height in feet (5.5 in)
+CAMERA_ANGLE = math.radians(60) # camera angle in degrees, converted to radians
+CAMERA_HEIGHT = 8.5/12 # camera height in feet (5.5 in)
 VERTICAL_FOV = 80.7
 HORIZONTAL_FOV = 120
 FOCAL_LENGTH = WIDTH/(2*math.tan(math.radians(HORIZONTAL_FOV/2)))
 
 # init camera
 port = 0
-os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
+#os.system('v4l2-ctl -d /dev/video' + str(port) + ' -c exposure_auto=1')
 cap = cv2.VideoCapture(port)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH,WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT,HEIGHT)
@@ -63,7 +63,7 @@ while True:
     upper_hsv = np.array([89, 255, 255])
 
     # image manipulation
-    os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute=0')
+    #os.system('v4l2-ctl -d /dev/video'+str(port)+' -c exposure_absolute=0')
     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     erosion = cv2.erode(mask, kernel, iterations=2)
